@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
+import path from 'path';
 
 dotenv.config();
 
@@ -15,11 +16,14 @@ app.use(cors({
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
 }));
-app.use(express.json());
+app.use(express.json()); 
 
-// Routes
+app.use('/uploads', express.static(path.join(__dirname, '/public/uploads')));
+
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+ 
+
 
 
 // MongoDB connection

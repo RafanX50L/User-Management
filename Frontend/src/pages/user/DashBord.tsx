@@ -12,16 +12,26 @@ import {
 } from "@mui/material";
 
 import { AccountCircle, Logout } from "@mui/icons-material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "../../redux/store";
+import {  RootState, useAppDispatch, useAppSelector } from "../../redux/store";
 import { logout } from "../../redux/authSlice";
+import { fetchUserData } from "../../redux/userSlice";
 
 const UserDashboard = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const navigate = useNavigate();
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useAppDispatch();
+  const { id } = useAppSelector((state) => state.auth);
+
+  useEffect(()=>{
+    const fetchuserData = () => {
+      console.log('done')
+      const values = dispatch(fetchUserData(id))
+      console.log(values)
+    }
+    fetchuserData();
+  },[])
 
   // User menu handling
   const handleMenuOpen = (event) => {

@@ -20,7 +20,6 @@ import {
   Fade,
   Backdrop,
 } from "@mui/material";
-
 import {
   AccountCircle,
   Person,
@@ -31,43 +30,42 @@ import {
   Phone,
   LocationOn,
   Work,
-  CalendarToday,
   Close,
-  Update,
 } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "../../redux/store";
+import { AppDispatch, RootState, useAppSelector } from "../../redux/store";
+import axios from "axios";
 import { logout } from "../../redux/authSlice";
 import { fetchUserData, updateUserData } from "../../redux/userSlice";
+import { useNavigate } from "react-router-dom";
 
 const UserProfile = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const dispatch = useDispatch<AppDispatch>();
-  const { id } = useSelector((state: RootState) => state.auth);
+  const { userData } = useAppSelector((state) => state.user);
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(()=>{
-    const fetchuserData = () => {
-      console.log('done')
-      const values = dispatch(fetchUserData(id))
-      console.log(values)
+  // Initialize userDetails with userData or empty object
+  const [userDetails, setUserDetails] = useState(userData || {});
+
+  // Fetch user data on component mount
+  useEffect(() => {
+    dispatch(fetchUserData(userDetails._id));
+  }, [dispatch]);
+
+  // Update local state when Redux userData changes
+  useEffect(() => {
+    if (userData) {
+      setUserDetails(userData);
     }
-    fetchuserData();
-  },[])
-
-  const [userDetails, setUserDetails] = useState({
-    fullName: "John Doe",
-    email: "john.doe@example.com",
-    phoneNumber: "+1 (555) 123-4567",
-    location: "San Francisco, CA",
-    occupation: "Software Engineer",
-    joinDate: "January 15, 2023",
-    bio: "Passionate developer with 5+ years of experience in web technologies and creating user-centric applications.",
-  });
+  }, [userData]);
 
   // User menu handling
-  const handleMenuOpen = (event) => {
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -89,19 +87,95 @@ const UserProfile = () => {
     setIsEditModalOpen(false);
   };
 
-  // Profile picture upload handler
-  const handleProfilePictureUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      // Implement file upload logic here
-      console.log("Uploaded file:", file);
+  const handleProfilePictureUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append("profileImage", file);
+    formData.append("id", userDetails._id);
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/user/upload",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        setUserDetails((prev) => ({
+          ...prev,
+          profilePicture: response.data.imageUrl,
+        }));
+      } else {
+        setError(response.data.message || "Upload failed");
+      }
+    } catch (error) {
+      setError("Error uploading file");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // const handleProfilePictureUpload = async (
+  //   event: React.ChangeEvent<HTMLInputElement>
+  // ) => {
+  //   const file = event.target.files?.[0];
+  //   console.log(file)
+  //   if (file) {
+  //     setIsLoading(true);
+  //     setError(null);
+
+  //     const formData = new FormData();
+  //     formData.append("profileImage", file);
+  //     formData.append("id", userDetails._id);
+  //     console.log('fhuasdfuiha')
+  //     try {
+  //       console.log('fjakdsfa')
+  //       const response = await fetch("http://localhost:5000/api/user/upload", {
+  //         method: "POST",
+  //         body: formData,
+  //         credentials: "include",
+  //       });
+
+  //       const data = await response.json();
+  //       console.log(data)
+  //       if (response.status === 200) {
+  //         setUserDetails((prev) => ({
+  //           ...prev,
+  //           profilePicture: data.imageUrl,
+  //         }));
+  //       } else {
+  //         setError(data.message || "Upload failed");
+  //       }
+  //     } catch (error) {
+  //       setError("Error uploading file");
+  //       console.log(error)
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   }
+  // };
+
   // Save profile changes
-  const handleSaveProfile = () => {
-    // In a real app, you would send updates to backend
-    handleCloseEditModal();
+  const handleSaveProfile = async () => {
+    if (!userDetails) return;
+    try {
+      await dispatch(updateUserData(userDetails)).unwrap();
+      handleCloseEditModal();
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+    }
   };
 
   return (
@@ -112,6 +186,15 @@ const UserProfile = () => {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             User Profile
           </Typography>
+          <Typography
+            onClick={() => navigate("/user")}
+            variant="h6"
+            component="div"
+            sx={{ flexGrow: 1, cursor: "pointer" }}
+          >
+            User Dashboard
+          </Typography>
+
           <Button
             color="inherit"
             onClick={handleMenuOpen}
@@ -136,115 +219,122 @@ const UserProfile = () => {
 
       {/* Main Content */}
       <Container maxWidth="md" sx={{ mt: 4 }}>
-       
-          <Grid container spacing={3}>
-            {/* Profile Overview */}
-            <Grid item xs={12} md={5}>
-              <Paper
-                elevation={4}
+        <Grid container spacing={3}>
+          {/* Profile Overview */}
+          <Grid item xs={12} md={5}>
+            <Paper
+              elevation={4}
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                padding: 3,
+                height: "100%",
+              }}
+            >
+              <Avatar
                 sx={{
+                  width: 120,
+                  height: 120,
+                  mb: 2,
+                  bgcolor: "primary.main",
+                }}
+                src={userDetails?.profilePicture}
+              >
+                <Person fontSize="large" />
+              </Avatar>
+              <input
+                accept="image/*"
+                style={{ display: "none" }}
+                id="raised-button-file"
+                type="file"
+                onChange={handleProfilePictureUpload}
+                disabled={isLoading}
+              />
+              <label htmlFor="raised-button-file">
+                <Button
+                  variant="contained"
+                  component="span"
+                  startIcon={<PhotoCamera />}
+                  sx={{ mb: 2 }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Uploading..." : "Upload Picture"}
+                </Button>
+              </label>
+              {error && (
+                <Typography variant="body2" color="error" sx={{ mb: 2 }}>
+                  {error}
+                </Typography>
+              )}
+              <Typography variant="h6">{userDetails?.name}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {userDetails?.occupation}
+              </Typography>
+            </Paper>
+          </Grid>
+
+          {/* User Details */}
+          <Grid item xs={12} md={7}>
+            <Card sx={{ height: "100%" }}>
+              <CardContent
+                sx={{
+                  height: "100%",
                   display: "flex",
                   flexDirection: "column",
-                  alignItems: "center",
-                  padding: 3,
-                  height: "100%",
                 }}
               >
-                <Avatar
+                <Box
                   sx={{
-                    width: 120,
-                    height: 120,
-                    mb: 2,
-                    bgcolor: "primary.main",
-                  }}
-                >
-                  <Person fontSize="large" />
-                </Avatar>
-                <input
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  id="raised-button-file"
-                  type="file"
-                  onChange={handleProfilePictureUpload}
-                />
-                <label htmlFor="raised-button-file">
-                  <Button
-                    variant="contained"
-                    component="span"
-                    startIcon={<PhotoCamera />}
-                    sx={{ mb: 2 }}
-                  >
-                    Upload Picture
-                  </Button>
-                </label>
-                <Typography variant="h6">{userDetails.fullName}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {userDetails.occupation}
-                </Typography>
-              </Paper>
-            </Grid>
-
-            {/* User Details */}
-            <Grid item xs={12} md={7}>
-              <Card sx={{ height: "100%" }}>
-                <CardContent
-                  sx={{
-                    height: "100%",
                     display: "flex",
-                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    mb: 2,
                   }}
                 >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      mb: 2,
-                    }}
-                  >
-                    <Typography variant="h6">User Information</Typography>
-                    <Tooltip title="Edit Profile">
-                      <IconButton onClick={handleOpenEditModal}>
-                        <Edit />
-                      </IconButton>
-                    </Tooltip>
+                  <Typography variant="h6">User Information</Typography>
+                  <Tooltip title="Edit Profile">
+                    <IconButton onClick={handleOpenEditModal}>
+                      <Edit />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+                <Box sx={{ flexGrow: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                    <Email sx={{ mr: 2, color: "text.secondary" }} />
+                    <Typography variant="body1">
+                      {userDetails?.email}
+                    </Typography>
                   </Box>
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                      <Email sx={{ mr: 2, color: "text.secondary" }} />
-                      <Typography variant="body1">
-                        {userDetails.email}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                      <Phone sx={{ mr: 2, color: "text.secondary" }} />
-                      <Typography variant="body1">
-                        {userDetails.phoneNumber}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                      <LocationOn sx={{ mr: 2, color: "text.secondary" }} />
-                      <Typography variant="body1">
-                        {userDetails.location}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                      <Work sx={{ mr: 2, color: "text.secondary" }} />
-                      <Typography variant="body1">
-                        {userDetails.occupation}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <CalendarToday sx={{ mr: 2, color: "text.secondary" }} />
-                      <Typography variant="body1">
-                        Joined: {userDetails.joinDate}
-                      </Typography>
-                    </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                    <Phone sx={{ mr: 2, color: "text.secondary" }} />
+                    <Typography variant="body1">
+                      {userDetails?.phone}
+                    </Typography>
                   </Box>
-                </CardContent>
-              </Card>
-            </Grid>
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                    <LocationOn sx={{ mr: 2, color: "text.secondary" }} />
+                    <Typography variant="body1">
+                      {userDetails?.location}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                    <Work sx={{ mr: 2, color: "text.secondary" }} />
+                    <Typography variant="body1">
+                      {userDetails?.occupation}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Person sx={{ mr: 2, color: "text.secondary" }} />
+                    <Typography variant="body1">
+                      Bio: {userDetails?.bio}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
           </Grid>
+        </Grid>
       </Container>
 
       {/* Edit Profile Modal */}
@@ -292,24 +382,11 @@ const UserProfile = () => {
                 <TextField
                   fullWidth
                   label="Full Name"
-                  value={userDetails.fullName}
+                  value={userDetails?.name || ""}
                   onChange={(e) =>
                     setUserDetails((prev) => ({
                       ...prev,
-                      fullName: e.target.value,
-                    }))
-                  }
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Email"
-                  value={userDetails.email}
-                  onChange={(e) =>
-                    setUserDetails((prev) => ({
-                      ...prev,
-                      email: e.target.value,
+                      name: e.target.value,
                     }))
                   }
                 />
@@ -318,11 +395,11 @@ const UserProfile = () => {
                 <TextField
                   fullWidth
                   label="Phone Number"
-                  value={userDetails.phoneNumber}
+                  value={userDetails?.phone || ""}
                   onChange={(e) =>
                     setUserDetails((prev) => ({
                       ...prev,
-                      phoneNumber: e.target.value,
+                      phone: e.target.value,
                     }))
                   }
                 />
@@ -331,7 +408,7 @@ const UserProfile = () => {
                 <TextField
                   fullWidth
                   label="Location"
-                  value={userDetails.location}
+                  value={userDetails?.location || ""}
                   onChange={(e) =>
                     setUserDetails((prev) => ({
                       ...prev,
@@ -344,7 +421,7 @@ const UserProfile = () => {
                 <TextField
                   fullWidth
                   label="Occupation"
-                  value={userDetails.occupation}
+                  value={userDetails?.occupation || ""}
                   onChange={(e) =>
                     setUserDetails((prev) => ({
                       ...prev,
@@ -359,12 +436,9 @@ const UserProfile = () => {
                   label="Bio"
                   multiline
                   rows={4}
-                  value={userDetails.bio}
+                  value={userDetails?.bio || ""}
                   onChange={(e) =>
-                    setUserDetails((prev) => ({
-                      ...prev,
-                      bio: e.target.value,
-                    }))
+                    setUserDetails((prev) => ({ ...prev, bio: e.target.value }))
                   }
                 />
               </Grid>

@@ -1,11 +1,11 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { AuthService } from '../services/authService';
-import axios, { AxiosError } from 'axios';
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { AuthService } from "../services/authService";
+import axios, { AxiosError } from "axios";
 
 export interface AuthState {
   token: string | null;
-  role: 'admin' | 'user' | null;
-  id : string;
+  role: "admin" | "user" | null;
+  id: string;
   isLoading: boolean;
   error: string | null;
 }
@@ -17,32 +17,31 @@ interface LoginCredentials {
 
 interface RegisterData extends LoginCredentials {
   name: string;
-  role: 'admin' | 'user';
+  role: "admin" | "user";
 }
 
 const initialState: AuthState = {
   token: null,
   role: null,
   isLoading: false,
-  id: '',
+  id: "",
   error: null,
 };
 
 export const register = createAsyncThunk(
-  'auth/register',
+  "auth/register",
   async (userData: RegisterData, { rejectWithValue }) => {
     try {
       return await AuthService.register(userData);
-    } catch (error) 
-    { 
-      const axiosError=error as AxiosError
+    } catch (error) {
+      const axiosError = error as AxiosError;
       return rejectWithValue(axiosError.status);
     }
   }
 );
 
 export const login = createAsyncThunk(
-  'auth/login',
+  "auth/login",
   async (credentials: LoginCredentials, { rejectWithValue }) => {
     try {
       return await AuthService.login(credentials);
@@ -53,15 +52,15 @@ export const login = createAsyncThunk(
 );
 
 // In services/authService.ts
-axios.interceptors.request.use(config => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  });
+axios.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
-  /*
+/*
   //normal reducer
   function reducer(action,state){
     switch(action.type==='increment')
@@ -74,14 +73,14 @@ axios.interceptors.request.use(config => {
   */
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
     logout: (state) => {
       state.token = null;
       state.role = null;
-      localStorage.removeItem('token');
-      localStorage.removeItem('role');
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
     },
   },
   extraReducers: (builder) => {

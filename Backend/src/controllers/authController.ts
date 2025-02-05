@@ -37,6 +37,7 @@ export const register = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
+    console.log('logaof')
     const { email, password } = req.body;
 
     // Find user
@@ -52,7 +53,7 @@ export const login = async (req: Request, res: Response) => {
       res.status(400).json({ message: 'Invalid credentials' });
       return
     }
-
+ 
     // Generate JWT
     const token = generateToken(user);
 
