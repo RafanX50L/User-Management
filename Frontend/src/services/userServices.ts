@@ -33,6 +33,14 @@ const UserServices = {
     console.log("API Response:", response.data);
     return response.data;
   },
+  imageUpload: async (formData: FormData) => {
+    const response = await axios.post(`${API_URL}/upload`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
 };
 
 export default UserServices;

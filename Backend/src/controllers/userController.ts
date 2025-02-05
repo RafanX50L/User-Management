@@ -50,31 +50,39 @@ const fetchData = async (req: Request, res: Response) => {
 };
 
 const uploadProfileImage = async (req: Request, res: Response) => {
-  console.log("entered to imageupload");
   try {
     if (!req.file) {
       res.status(400).json({ message: "No file uploaded" });
-      return;
+      return
     }
 
-    const imageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
     const { id } = req.body;
-    // Update user profile with new image
+    if (!id) {
+      res.status(400).json({ message: "User ID is required" });
+      return
+    }
+
+    const imageUrl = `${req.file.filename}`;
     const updatedUser = await User.findByIdAndUpdate(
       id,
       { profilePicture: imageUrl },
-      { new: true }
+      { new: true, runValidators: true }
     );
 
     if (!updatedUser) {
       res.status(404).json({ message: "User not found" });
-      return;
+      return
     }
- 
-    res.status(200).json({ message: "Profile picture updated", imageUrl });
-    return;
+
+    res.status(200).json({ 
+      message: "Profile picture updated successfully",
+      imageUrl 
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error uploading image", error });
+    console.error("Upload error:", error);
+    res.status(500).json({ 
+      message: error instanceof Error ? error.message : "Error uploading image"
+    });
   }
 };
 

@@ -34,16 +34,26 @@ import {
 } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState, useAppSelector } from "../../redux/store";
+import {
+  AppDispatch,
+  RootState,
+  useAppDispatch,
+  useAppSelector,
+} from "../../redux/store";
 import axios from "axios";
 import { logout } from "../../redux/authSlice";
-import { fetchUserData, updateUserData } from "../../redux/userSlice";
+import {
+  fetchUserData,
+  imageUpload,
+  updateUserData,
+} from "../../redux/userSlice";
 import { useNavigate } from "react-router-dom";
+import { response } from "express";
 
 const UserProfile = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useAppDispatch();
   const { userData } = useAppSelector((state) => state.user);
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -63,6 +73,68 @@ const UserProfile = () => {
       setUserDetails(userData);
     }
   }, [userData]);
+
+  const handleProfilePictureUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append("profileImage", file);
+    formData.append("id", userDetails._id);
+
+    try {
+      // Dispatch and unwrap the promise to properly handle success/errors
+      const response = await dispatch(imageUpload(formData)).unwrap();
+
+      setUserDetails((prev) => ({
+        ...prev,
+        profilePicture: response.imageUrl,
+      }));
+    } catch (error: any) {
+      const errorMessage = error.message || "Error uploading file";
+      setError(errorMessage);
+      console.error("Upload error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // const handleProfilePictureUpload = async (
+  //   event: React.ChangeEvent<HTMLInputElement>
+  // ) => {
+  //   const file = event.target.files?.[0];
+  //   if (!file) return;
+
+  //   setIsLoading(true);
+  //   setError(null);
+
+  //   const formData = new FormData();
+  //   formData.append("profileImage", file);
+  //   formData.append("id", userDetails._id);
+
+  //   try {
+  //     const response = dispatch(imageUpload(formData));
+
+  //     if (response.status === 200) {
+  //       setUserDetails((prev) => ({
+  //         ...prev,
+  //         profilePicture: response.data.imageUrl,
+  //       }));
+  //     } else {
+  //       setError(response.data.message || "Upload failed");
+  //     }
+  //   } catch (error) {
+  //     setError("Error uploading file");
+  //     console.error(error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   // User menu handling
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -87,87 +159,6 @@ const UserProfile = () => {
     setIsEditModalOpen(false);
   };
 
-  const handleProfilePictureUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    const formData = new FormData();
-    formData.append("profileImage", file);
-    formData.append("id", userDetails._id);
-
-    try {
-      const response = await axios.post(
-        "http://localhost:5000/api/user/upload",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        setUserDetails((prev) => ({
-          ...prev,
-          profilePicture: response.data.imageUrl,
-        }));
-      } else {
-        setError(response.data.message || "Upload failed");
-      }
-    } catch (error) {
-      setError("Error uploading file");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // const handleProfilePictureUpload = async (
-  //   event: React.ChangeEvent<HTMLInputElement>
-  // ) => {
-  //   const file = event.target.files?.[0];
-  //   console.log(file)
-  //   if (file) {
-  //     setIsLoading(true);
-  //     setError(null);
-
-  //     const formData = new FormData();
-  //     formData.append("profileImage", file);
-  //     formData.append("id", userDetails._id);
-  //     console.log('fhuasdfuiha')
-  //     try {
-  //       console.log('fjakdsfa')
-  //       const response = await fetch("http://localhost:5000/api/user/upload", {
-  //         method: "POST",
-  //         body: formData,
-  //         credentials: "include",
-  //       });
-
-  //       const data = await response.json();
-  //       console.log(data)
-  //       if (response.status === 200) {
-  //         setUserDetails((prev) => ({
-  //           ...prev,
-  //           profilePicture: data.imageUrl,
-  //         }));
-  //       } else {
-  //         setError(data.message || "Upload failed");
-  //       }
-  //     } catch (error) {
-  //       setError("Error uploading file");
-  //       console.log(error)
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   }
-  // };
-
-  // Save profile changes
   const handleSaveProfile = async () => {
     if (!userDetails) return;
     try {
@@ -239,7 +230,11 @@ const UserProfile = () => {
                   mb: 2,
                   bgcolor: "primary.main",
                 }}
-                src={userDetails?.profilePicture}
+                src={
+                  userDetails?.profilePicture
+                    ? `http://localhost:5000/uploads/${userDetails?.profilePicture}`
+                    : undefined
+                }
               >
                 <Person fontSize="large" />
               </Avatar>
@@ -259,7 +254,11 @@ const UserProfile = () => {
                   sx={{ mb: 2 }}
                   disabled={isLoading}
                 >
-                  {isLoading ? "Uploading..." : "Upload Picture"}
+                  {isLoading
+                    ? "Uploading..."
+                    : userDetails?.profilePicture
+                    ? "Change Picture"
+                    : "Upload Picture"}
                 </Button>
               </label>
               {error && (

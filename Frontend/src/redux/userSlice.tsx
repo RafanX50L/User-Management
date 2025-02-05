@@ -28,6 +28,18 @@ const updateUserData = createAsyncThunk<UpdateUserResponse, UserData>(
   }
 );
 
+const imageUpload = createAsyncThunk(
+  'user/upload',
+  async (formData: FormData, { rejectWithValue }) => {
+    try {
+      const response = await UserService.imageUpload(formData);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data || { message: "Failed to upload Image" });
+    }
+  }
+);
+
 const fetchUserData = createAsyncThunk<FetchUserResponse, string>(
   "user/fetch",
   async (userId, { rejectWithValue }) => {
@@ -74,5 +86,5 @@ const userSlice = createSlice({
   },
 });
 
-export { updateUserData, fetchUserData };
+export { updateUserData, fetchUserData, imageUpload };
 export default userSlice.reducer;
