@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import User, { IUser } from '../models/User';
-import { log } from 'console';
 
 declare global {
   namespace Express {
@@ -16,7 +15,6 @@ export const verifyToken = async (
   res: Response,
   next: NextFunction
 ) => {
-  console.log('djfhjaksd');
   
   try {
     const token = req.headers.authorization?.split(' ')[1];

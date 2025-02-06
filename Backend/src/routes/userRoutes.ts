@@ -9,7 +9,7 @@ const router = express.Router();
 router.post("/upload",upload.single("profileImage"), uploadProfileImage);
 
 
-router.post("/update", updateData);
+router.post("/update", verifyToken, checkRole(["user"]), updateData);
 router.get("/fetch/:id", verifyToken, checkRole(["user"]), fetchData);
 
 export default router;

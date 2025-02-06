@@ -48,6 +48,18 @@ const updateUser = createAsyncThunk(
   }
 )
 
+const deleteUser = createAsyncThunk(
+  "admin/deleteUser",
+  async(userId:string,{rejectWithValue}) => {
+    try {
+      const data = await AdminServices.deleteUser(userId);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error);
+    }
+  }
+)
+
 const adminSlice = createSlice({
   name: "admin",
   initialState,
@@ -59,10 +71,9 @@ const adminSlice = createSlice({
       })
       .addCase(fetchUsers.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.usersData = action.payload.data; // Adjusted if data is directly returned
+        state.usersData = action.payload.data; 
       })
       .addCase(fetchUsers.rejected, (state, action) => {
-        // Handle rejected case
         state.isLoading = false;
         state.error = action.payload;
       })
@@ -88,9 +99,19 @@ const adminSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload.message;
       })
-
+      .addCase(deleteUser.pending, (state)=>{
+        state.isLoading = true;
+      })
+      .addCase(deleteUser.fulfilled, (state,action)=>{
+        state.isLoading = false;
+        state.usersData = action.payload.data;
+      })
+      .addCase(deleteUser.rejected, (state,action)=>{
+        state.isLoading = false;
+        state.error = action.payload.message;
+      })
   },
 });
 
-export { fetchUsers, AddUser, updateUser };
+export { fetchUsers, AddUser, updateUser, deleteUser };
 export default adminSlice.reducer;

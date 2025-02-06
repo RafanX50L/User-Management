@@ -44,7 +44,11 @@ const AdminServices = {
     updateUser: async (updatedData:updateData):Promise<FetchUsersResponse> => {
         const response = await axios.post(`${API_URL}/updateUser`,updatedData);
         return response.data;
-    } 
+    },
+    deleteUser: async (userId:string):Promise<FetchUsersResponse> => {
+        const response = await axios.post(`${API_URL}/deleteUser/${userId}`);
+        return response.data;
+    }
 };
 
 

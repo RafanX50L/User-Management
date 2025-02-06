@@ -54,4 +54,51 @@ const addUser = async ( req:Request,res:Response ) => {
     }
 }
 
-export { fetchUsers, addUser };
+const updateUser = async ( req:Request,res:Response ) => {
+    const { id, name, role } = req.body;
+    console.log(req.body);
+    try {
+        const user = await User.findById(id);
+        if(!user){
+            res.status(400).json({message:'user not found'});
+            return
+        }
+
+        user.name = name;
+        user.role = role;
+        user.save();
+        const users = await User.find();
+
+        res.status(200).json({data:users,message:"updated user scuccesfull"})
+        return;
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({message:"Server error"});
+        return;
+    }
+}
+
+const deleteUser = async (req:Request,res:Response) => {
+    const id = req.params.id;
+    console.log(id);
+    try {
+        const user = await User.findById(id);
+        if(!user){
+            res.status(400).json({message:"user not found"});
+            return;
+        }
+        
+        await User.findByIdAndDelete(id);
+
+        const users = await User.find();
+        res.status(200).json({data:users,message:"deleting user successfull"});
+        return;
+
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({message:'server error'});
+        return;
+    }
+}
+
+export { fetchUsers, addUser, updateUser, deleteUser }; 

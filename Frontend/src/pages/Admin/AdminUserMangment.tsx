@@ -51,12 +51,13 @@ import { useEffect, useState } from "react";
 import { useActionData, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../redux/store";
 import { logout } from "../../redux/authSlice";
-import { AddUser, fetchUsers, updateUser } from "../../redux/adminSlice";
+import { AddUser, deleteUser, fetchUsers, updateUser } from "../../redux/adminSlice";
 
 // Admin Dashboard Component
 
 const AdminUserManagement = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   // Local state
   const [searchTerm, setSearchTerm] = useState("");
@@ -126,20 +127,44 @@ const AdminUserManagement = () => {
   // Update user handler
   const handleUpdateUser = () => {
     if (selectedUser) {
-      const userdata = {
-        id: selectedUser._id,
-        name: selectedUser.name,
-        role: selectedUser.role,
-      };
-      dispatch(updateUser(userdata)) // Dispatch updateUser action
-        .unwrap()
-        .then(() => {
-          setOpenEditUserModal(false);
-          dispatch(fetchUsers()); // Refresh user list
-        })
-        .catch((error) => {
-          console.error("Error updating user:", error);
-        });
+      if (
+        window.confirm(`Are you sure you want to update ${selectedUser.name}?`)
+      ) {
+        const userdata = {
+          id: selectedUser._id,
+          name: selectedUser.name,
+          role: selectedUser.role,
+        };
+        dispatch(updateUser(userdata)) // Dispatch updateUser action
+          .unwrap()
+          .then(() => {
+            setOpenEditUserModal(false);
+            dispatch(fetchUsers()); // Refresh user list
+          })
+          .catch((error) => {
+            console.error("Error updating user:", error);
+          });
+      }
+    }
+  };
+  // Delete user handler
+  const handleDeleteUser = (user) => {
+    setSelectedUser(user);
+    if (selectedUser) {
+      if (
+        window.confirm(`Are you sure you want to delete ${selectedUser.name}?`)
+      ) {
+        
+        dispatch(deleteUser(selectedUser._id)) // Dispatch deleteUser action
+          .unwrap()
+          .then(() => {
+            setOpenEditUserModal(false);
+            dispatch(fetchUsers()); // Refresh user list
+          })
+          .catch((error) => {
+            console.error("Error deleting user:", error);
+          });
+      }
     }
   };
 
@@ -328,7 +353,10 @@ const AdminUserManagement = () => {
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Delete User">
-                              <IconButton color="error">
+                              <IconButton
+                                color="error"
+                                onClick={() => handleDeleteUser(user)}
+                              >
                                 <Delete />
                               </IconButton>
                             </Tooltip>
