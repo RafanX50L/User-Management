@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import { timeStamp } from 'console';
 
 export interface IUser extends mongoose.Document {
   name: string;
@@ -24,7 +25,7 @@ const userSchema = new mongoose.Schema({
   bio: { type:String },
   profilePicture: { type: String, default: "" },
   role: { type: String, enum: ['user', 'admin'], default: 'user' }
-});
+},{timestamps:true});
 
 // Hash password before saving
 userSchema.pre<IUser>('save', async function (next) {

@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
+import adminRotes from './routes/adminRotes'
 import path from 'path';
 
 dotenv.config();
@@ -22,6 +23,7 @@ app.use('/uploads', express.static(path.join(__dirname, '/public/uploads')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/admin', adminRotes);
  
 
 

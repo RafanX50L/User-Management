@@ -11,10 +11,11 @@ import {
   ListItemText,
 } from "@mui/material";
 import { Dashboard, Person, Settings, Logout } from "@mui/icons-material";
-import { useState } from "react";
 import { useAppDispatch } from "../../redux/store";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../../redux/authSlice";
+import { useEffect } from "react";
+import { fetchUsers } from "../../redux/adminSlice";
 
 // Admin Dashboard Component
 
@@ -24,6 +25,13 @@ const AdminDashboard = () => {
   const handleLogout = () => {
     dispatch(logout());
   };
+
+  useEffect(()=>{
+    const fetchUserData=()=>{
+      dispatch(fetchUsers())
+    }
+    fetchUserData();
+  },[dispatch])
 
   // Sidebar content
   const drawerContent = (

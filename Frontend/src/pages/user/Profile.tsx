@@ -20,6 +20,7 @@ import {
   Fade,
   Backdrop,
 } from "@mui/material";
+
 import {
   AccountCircle,
   Person,
@@ -33,22 +34,10 @@ import {
   Close,
 } from "@mui/icons-material";
 import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  AppDispatch,
-  RootState,
-  useAppDispatch,
-  useAppSelector,
-} from "../../redux/store";
-import axios from "axios";
+import { useAppDispatch, useAppSelector, } from "../../redux/store";
 import { logout } from "../../redux/authSlice";
-import {
-  fetchUserData,
-  imageUpload,
-  updateUserData,
-} from "../../redux/userSlice";
+import { fetchUserData, imageUpload, updateUserData, } from "../../redux/userSlice";
 import { useNavigate } from "react-router-dom";
-import { response } from "express";
 
 const UserProfile = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -104,39 +93,6 @@ const UserProfile = () => {
     }
   };
 
-  // const handleProfilePictureUpload = async (
-  //   event: React.ChangeEvent<HTMLInputElement>
-  // ) => {
-  //   const file = event.target.files?.[0];
-  //   if (!file) return;
-
-  //   setIsLoading(true);
-  //   setError(null);
-
-  //   const formData = new FormData();
-  //   formData.append("profileImage", file);
-  //   formData.append("id", userDetails._id);
-
-  //   try {
-  //     const response = dispatch(imageUpload(formData));
-
-  //     if (response.status === 200) {
-  //       setUserDetails((prev) => ({
-  //         ...prev,
-  //         profilePicture: response.data.imageUrl,
-  //       }));
-  //     } else {
-  //       setError(response.data.message || "Upload failed");
-  //     }
-  //   } catch (error) {
-  //     setError("Error uploading file");
-  //     console.error(error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  // User menu handling
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
