@@ -47,13 +47,14 @@ const UserProfile = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const id = localStorage.getItem('id')
 
   // Initialize userDetails with userData or empty object
   const [userDetails, setUserDetails] = useState(userData || {});
 
   // Fetch user data on component mount
   useEffect(() => {
-    dispatch(fetchUserData(userDetails._id));
+    dispatch(fetchUserData(id));
   }, [dispatch]);
 
   // Update local state when Redux userData changes

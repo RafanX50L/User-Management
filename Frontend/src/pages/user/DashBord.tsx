@@ -25,12 +25,7 @@ const UserDashboard = () => {
   const { id } = useAppSelector((state) => state.auth);
 
   useEffect(()=>{
-    const fetchuserData = () => {
-      console.log('done')
-      const values = dispatch(fetchUserData(id))
-      console.log(values)
-    }
-    fetchuserData();
+    dispatch(fetchUserData(id));
   },[])
 
   // User menu handling

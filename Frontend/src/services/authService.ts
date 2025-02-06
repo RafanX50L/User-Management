@@ -18,6 +18,7 @@ export const AuthService = {
     const response = await axios.post(`${API_URL}/register`, userData);
     localStorage.setItem('token', response.data.token);
     localStorage.setItem('role', response.data.role);
+    localStorage.setItem('id', response.data.id)
     return response.data;
   },
 
@@ -27,8 +28,10 @@ export const AuthService = {
   }): Promise<AuthResponse> => {
     console.log('done')
     const response = await axios.post(`${API_URL}/login`, credentials);
+    console.log(response);
     localStorage.setItem('token', response.data.token);
     localStorage.setItem('role', response.data.role);
+    localStorage.setItem('id', response.data.id)
     return response.data;
   },
 };
